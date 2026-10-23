@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4962" height="3252" viewBox="0 0 827 542" role="img" aria-labelledby="title desc">
+  <title id="title">Elsewedy Electric</title>
+  <desc id="desc">Black uppercase ELSEWEDY above ELECTRIC, separated by a black line, with a red curved underline on a white background.</desc>
+  <rect width="827" height="542" fill="#fff"/>
+  <g fill="#211e1f" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" text-anchor="middle">
+    <text x="428" y="245" textLength="660" lengthAdjust="spacingAndGlyphs" letter-spacing="10">ELSEWEDY</text>
+    <text x="429" y="361" textLength="660" lengthAdjust="spacingAndGlyphs" letter-spacing="10">ELECTRIC</text>
+  </g>
+  <path d="M101 276.5 H758" fill="none" stroke="#211e1f" stroke-width="9.5"/>
+  <path d="M220 400 C319 430 535 430 642 400 C581 433 281 452 220 400 Z" fill="#f21d2b"/>
+</svg>
