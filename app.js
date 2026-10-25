@@ -225,7 +225,7 @@ const SECTIONS = [
       ['Natural Gas', u(NG_TOTAL, 'Sm³/h'), '', ['utilities', { view: 'gas' }]], ['Top Consumer', top.name.replace('Factory ', 'Fac. '), '', ['utilities', { scope: top.id }]], ['Above Normal', '2', 'warn', ['utilities']]]; },
     live: () => 'Factory B energy +18% · Factory D water +16% above normal',
     state: () => ['warn', '2 above normal'] },
-  { id: 'energy', page: 'energy', title: 'Energy & Sustainability', tone: 'green', icon: 'leaf', nodes: ['solar'], box: [1282, 94, 298, 212], crop: [1227, 282, 278, 80],
+  { id: 'energy', page: 'energy', title: 'Sustainability', tone: 'green', icon: 'leaf', nodes: ['solar'], box: [1282, 94, 298, 212], crop: [1227, 282, 278, 80],
     tags: ['Solar', 'Energy monitoring', 'Water conservation'],
     kpis: () => [
       ['Current Load', u(S.load, 'MW', 2), '', ['energy']], ['Solar Gen.', u(S.solar, 'MW', 2), 'good', ['energy', { focus: 'sec-solar' }]], ['Renewable', pct(S.solar / S.load * 100), 'good', ['energy', { focus: 'sec-mix' }]],
@@ -1019,7 +1019,7 @@ function gasAfter() {
    4. ENERGY & SUSTAINABILITY
    ====================================================================== */
 const solarToday = () => { const hf = D.hourNow(); let e = 0; for (let h = 0; h < hf; h += .25) e += D.solarAt(h) * .25; return e; };
-PAGES.energy = { title: 'Energy & Sustainability', nav: 'Energy & Sustainability', tone: 'green', icon: 'leaf', sub: 'Power · solar · energy cost · carbon · water',
+PAGES.energy = { title: 'Sustainability', nav: 'Sustainability', tone: 'green', icon: 'leaf', sub: 'Power · solar · energy cost · carbon · water',
   render() {
     const P = rl(), e = () => per(165, energyToday(), 'en', 1), solarE = () => per(14.6, solarToday(), 'so', 1);
     let h = tiles([
