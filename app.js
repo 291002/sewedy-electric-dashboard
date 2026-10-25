@@ -1117,7 +1117,8 @@ PAGES.safety = { title: 'Safety & Emergency Management', nav: 'Safety & Emergenc
     h += card('Emergency map', 'map', `<div class="mapbox" id="emap"></div>`, 's7 tone-orange', '', 'sec-emap');
     h += card('Fire station FS-1', 'fire', `<div class="fill">${listHTML([['Engine 1', 'Pumper · 4,000 L', 'ok', 'Available'], ['Engine 2', 'Foam tender · 6,000 L', 'ok', 'Available'], ['Ambulance A-1', 'ALS · paramedic on duty', 'ok', 'Available'], ['Rescue R-1', 'Hazmat & confined space', 'ok', 'Available']])}
       <div style="margin-top:10px">${kv([['Crew on shift', '14 firefighters · 2 paramedics'], ['Last drill', '28 Sep · Factory C evacuation'], ['Next drill', '12 Oct · gas release, Factory F']])}</div></div>`, 's5 tone-orange', '', 'sec-station');
-    h += card('Fire detection', 'fire', table(['Zone', 'Detectors', 'Faults', 'Status'], D.FACTORIES.map((f, i) => ({ c: [`<b>${f.id === 'S' ? 'Services' : f.name}</b>`, fmt([260, 240, 420, 330, 230, 210, 230][i]), i === 2 ? 1 : 0, i === 2 ? pill('warn', '1 fault') : pill('ok', 'Normal')] }))), 's4 tone-orange', '', 'sec-fire');
+    h += card('Fire detection', 'fire', table(['Zone', 'Detectors', 'Faults', 'Status'], D.FACTORIES.map((f, i) => { const n = FIRE_FAULTS.filter(x => x.zone === f.id && x.status !== 'Repaired').length;
+      return { c: [`<b>${f.id === 'S' ? 'Services' : f.name}</b>`, fmt([260, 240, 420, 330, 230, 210, 230][i]), n, n ? pill('warn', `${n} fault${n > 1 ? 's' : ''} ›`) : pill('ok', 'Normal')], go: n ? () => fireFaultDrawer(f.id) : null }; })), 's4 tone-orange', 'Click a fault to see details', 'sec-fire');
     h += card('Gas detection', 'warn', table(['Detector', 'Location', 'Reading', 'Status'], [['GD-14', 'Factory F paint shop', 18, 1], ['GD-09', 'Factory F paint store', 6, 1], ['GD-31', 'Factory C furnace', 12, 0], ['GD-02', 'Factory B boiler', 2, 1], ['GD-44', 'Factory D solvent store', 4, 1], ['GD-51', 'Water plant (Cl₂)', 0.1, 0], ['GD-60', 'Factory E', 1, 1]]
       .map(([a, b, v, lel]) => ({ c: [`<b>${a}</b>`, b, lel ? `${v}% LEL` : `${v} ppm`, lel && v >= 10 ? pill('warn', 'Warning') : pill('ok', 'Normal')], go: a === 'GD-14' ? () => alarmDrawer(D.ALARMS.find(x => x.asset === 'Gas detector GD-14').id) : null }))), 's4 tone-orange', 'Warn 10% · trip 20% LEL', 'sec-gas');
     h += card('Emergency response times', 'clock', canvas('c-resp'), 's4 tone-orange', hb('Incident history', incidentHistory), 'sec-resp');
@@ -1134,6 +1135,29 @@ PAGES.safety = { title: 'Safety & Emergency Management', nav: 'Safety & Emergenc
     mkChart('c-resp', barCfg(['02 Sep', '09 Sep', '16 Sep', '21 Sep', '28 Sep', '04 Oct', 'Today'], [{ label: 'Minutes', data: v, colors: v.map(x => x > 5 ? C.red : hexA(C.orange, .85)) }, { type: 'line', label: 'Target 5 min', data: Array(7).fill(5), color: REF(), dash: [5, 4] }], { thick: 22 }));
   },
 };
+/* Fire detection faults (demo). A row in the Fire detection table opens these. */
+const FIRE_FAULTS = [
+  { id: 'FF-0412', zone: 'C', device: 'Smoke detector SD-C-207', type: 'Optical smoke detector', panel: 'Fire panel FP-C', loop: 'Loop 2', addr: '2.047', location: 'Factory C · Hall 2 · bay 14, ceiling 9 m',
+    fault: 'Detector contaminated · sensitivity drift', since: '08:42', date: 'today', value: '78% drift', limit: '70% drift', status: 'Active · Unack', ackBy: '—',
+    impact: 'Detector still reports fire but may alarm late or falsely. The rest of loop 2 (63 devices) is healthy.',
+    action: 'Clean or replace the detector head (spare SD-OPT-2 in Fire station FS-1 store). Test with smoke aerosol after the swap and reset the fault on FP-C.' },
+];
+function fireFaultDrawer(zone) {
+  const list = FIRE_FAULTS.filter(x => x.zone === zone && x.status !== 'Repaired'); if (!list.length) return closeDrawer();
+  const f = list[0], fz = D.FACTORIES.find(x => x.id === zone), r = D.rng(f.id);
+  const redraw = () => { refreshAll(); fireFaultDrawer(zone); };
+  const btn = [];
+  if (f.status.endsWith('Unack')) btn.push(`<button class="btn" type="button" data-act="${reg(() => { f.status = 'Active · Ack'; f.ackBy = 'Op. You (this console)'; toast(`${f.id} acknowledged`); redraw(); })}">Acknowledge</button>`);
+  btn.push(`<button class="btn green" type="button" data-act="${reg(() => { f.status = 'Repaired'; if (f.ackBy === '—') f.ackBy = 'Op. You (this console)'; toast(`${f.device} repaired · fault cleared`); redraw(); })}">Mark repaired</button>`);
+  btn.push(`<button class="btn ghost" type="button" data-act="${reg(() => toast(`Work order WO-${8800 + Math.floor(r() * 199)} created for ${f.device} (demo)`))}">Create work order</button>`);
+  drawer(dHead('fire', f.fault, `${f.id} · Fire detection · ${fz ? fz.name : zone}`) +
+    `<div class="tiles" style="--n:3">${tile({ l: 'Severity', v: 'Fault', st: 'warn' })}${tile({ l: 'Reading', v: f.value })}${tile({ l: 'Fault limit', v: f.limit })}</div>` +
+    box('Device', kv([['Device', f.device], ['Type', f.type], ['Location', f.location], ['Panel / loop', `${f.panel} · ${f.loop}`], ['Address', f.addr]])) +
+    box('Fault', kv([['Fault', f.fault], ['Since', `${f.since} · ${f.date}`], ['Status', statusPill(f.status, 'warn')], ['Acknowledged by', f.ackBy]])) +
+    box('Impact', `<p class="note" style="font-size:13px;color:#fff">${f.impact}</p>`) +
+    box('Recommended action', `<p class="note" style="font-size:13px;color:#fff">${f.action}</p>`) +
+    `<div class="actions">${btn.join('')}</div>`, 'orange');
+}
 function incidentHistory() {
   infoDrawer('list', 'Incident history', 'Last 30 days', table(['Date', 'Type', 'Location', 'Response', 'Outcome'], [['04 Oct', 'Gas warning', 'Factory F', '3.1 min', 'Ventilation restored'], ['28 Sep', 'Evacuation drill', 'Factory C', '4.4 min', '612 people out in 6 min'], ['21 Sep', 'Small fire (bin)', 'Factory C', '2.8 min', 'Extinguished · no injuries'],
     ['16 Sep', 'First aid', 'Truck yard T1', '3.9 min', 'Minor cut · treated'], ['09 Sep', 'Fire alarm (false)', 'Factory B', '3.2 min', 'Steam from cleaning'], ['02 Sep', 'Chemical spill drill', 'Factory D', '4.8 min', 'Contained in 11 min']].map(c => ({ c })), { mh: 600 }), 'orange');
